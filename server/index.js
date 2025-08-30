@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 
@@ -303,8 +304,19 @@ async function initializeDatabase() {
   }
 }
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-  console.log(`API available at http://0.0.0.0:${PORT}/api`);
-});
+// Initialize and start server
+async function startServer() {
+  try {
+    await initializeSupabaseStorage();
+    await initializeDatabase();
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://0.0.0.0:${PORT}`);
+      console.log(`API available at http://0.0.0.0:${PORT}/api`);
+    });
+  } catch (error) {
+    console.error('Server initialization error:', error);
+  }
+}
+
+startServer();

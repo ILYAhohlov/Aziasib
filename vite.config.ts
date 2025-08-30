@@ -56,7 +56,7 @@ import { defineConfig } from 'vite';
       port: 3000,
       host: '0.0.0.0',
       open: true,
-      allowedHosts: 'all',
+      allowedHosts: ['localhost', '0.0.0.0', '.replit.dev', '.pike.replit.dev'],
       proxy: {
         '/api': {
           target: 'http://0.0.0.0:5000',
