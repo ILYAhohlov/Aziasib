@@ -53,11 +53,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node server/index.js"
+args = "npm run build && node server/index.js"
 
 [[ports]]
 localPort = 3000
