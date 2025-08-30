@@ -18,7 +18,7 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password.trim()) {
       setError("Введите пароль");
       return;
@@ -30,14 +30,14 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
     // Имитация проверки пароля
     setTimeout(() => {
       const isAuthenticated = onLogin(password);
-      
+
       if (isAuthenticated) {
         // Успешный вход - переключение произойдет в родительском компоненте
       } else {
         setError("Неверный пароль");
         setPassword("");
       }
-      
+
       setIsLoading(false);
     }, 1000);
   };
@@ -64,7 +64,7 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
             <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
               <Shield className="w-8 h-8 text-blue-600" />
             </div>
-            
+
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
                 Административная панель
@@ -82,7 +82,7 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Пароль администратора
                 </label>
-                
+
                 <div className="relative">
                   <input
                     id="password"
@@ -93,11 +93,11 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     disabled={isLoading}
                   />
-                  
+
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                     <Lock className="w-5 h-5 text-gray-400" />
                   </div>
-                  
+
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}

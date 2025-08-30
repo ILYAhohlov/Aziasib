@@ -18,15 +18,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../build')));
 
 // MongoDB connection
-const MONGODB_URI = "mongodb://optbazar_becomingto:71dccccce5b294406027a42ed3c3020fb3e797e3@dfqdnz.h.filess.io:27018/optbazar_becomingto";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://optbazar_becomingto:71dccccce5b294406027a42ed3c3020fb3e797e3@dfqdnz.h.filess.io:27018/optbazar_becomingto";
 
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Supabase configuration
-const supabaseUrl = 'https://pdlhdxjsjmcgojzlwujl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://pdlhdxjsjmcgojzlwujl.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Multer configuration for file uploads
@@ -212,8 +212,13 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (username === 'admin' && password === 'admin123') {
-      const token = jwt.sign({ username }, 'secret-key', { expiresIn: '24h' });
+    // В продакшене используйте переменные окружения
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+    const JWT_SECRET = process.env.JWT_SECRET || 'secret-key';
+
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
       res.json({ token, message: 'Login successful' });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
@@ -343,6 +348,92 @@ const initializeDatabase = async () => {
 
       await Product.insertMany(sampleProducts);
       console.log('Sample products added to database');
+    }
+
+    // Check if orders already exist
+    const existingOrders = await Order.find();
+    if (existingOrders.length === 0) {
+      // Add sample orders
+      const sampleOrders = [
+        {
+          items: [
+            {
+              productId: null,
+              name: "Огурцы свежие",
+              price: 50,
+              quantity: 15
+            },
+            {
+              productId: null,
+              name: "Помидоры черри",
+              price: 180,
+              quantity: 8
+            }
+          ],
+          customerInfo: {
+            name: "Иван Петров",
+            phone: "+7 900 123-45-67",
+            address: "г. Москва, ул. Тверская, д. 10",
+            telegramId: 123456789
+          },
+          totalAmount: 2190,
+          status: "В обработке",
+          comments: "Доставка до 18:00",
+          orderSource: "telegram",
+          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) // вчера
+        },
+        {
+          items: [
+            {
+              productId: null,
+              name: "Яблоки Гала",
+              price: 120,
+              quantity: 25
+            }
+          ],
+          customerInfo: {
+            name: "Мария Сидорова",
+            phone: "+7 911 987-65-43",
+            address: "г. СПб, Невский пр., д. 50",
+            telegramId: 987654321
+          },
+          totalAmount: 3000,
+          status: "Завершен",
+          comments: "",
+          orderSource: "web",
+          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // позавчера
+        },
+        {
+          items: [
+            {
+              productId: null,
+              name: "Черный перец горошком",
+              price: 280,
+              quantity: 3
+            },
+            {
+              productId: null,
+              name: "Куркума молотая",
+              price: 450,
+              quantity: 2
+            }
+          ],
+          customerInfo: {
+            name: "Алексей Козлов",
+            phone: "+7 912 345-67-89",
+            address: "г. Екатеринбург, ул. Ленина, д. 25",
+            telegramId: 456789123
+          },
+          totalAmount: 1740,
+          status: "Принят",
+          comments: "Срочная доставка",
+          orderSource: "telegram",
+          createdAt: new Date(Date.now() - 60 * 60 * 1000) // час назад
+        }
+      ];
+
+      await Order.insertMany(sampleOrders);
+      console.log('Sample orders added to database');
     }
   } catch (error) {
     console.error('Database initialization error:', error);
