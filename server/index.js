@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from the React app build directory
-app.use(express.static(path.join(__dirname, '../build')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // MongoDB connection
 const MONGODB_URI = "mongodb://optbazar_becomingto:71dccccce5b294406027a42ed3c3020fb3e797e3@dfqdnz.h.filess.io:27018/optbazar_becomingto";
@@ -232,7 +232,7 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
-  res.sendFile(path.join(__dirname, '../build/index.html'));
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 // Initialize Supabase storage

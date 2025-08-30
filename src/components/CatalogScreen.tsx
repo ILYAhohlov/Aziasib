@@ -162,27 +162,17 @@ export function CatalogScreen({ navigateToScreen, cartItemsCount, addToCart }: C
       setLoading(true);
       setError(null);
       try {
-        // Replace with your Supabase project URL and API key
-        // For a production app, you'd typically use environment variables
-        const SUPABASE_URL = "https://pdlhdxjsjmcgojzlwujl.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g";
-
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-        });
+        const res = await fetch('/api/products');
 
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         
         const data = await res.json();
-        // Supabase typically returns _id, map it to id for consistency
+        // MongoDB returns _id, map it to id for consistency
         const formattedData = data.map((product: any) => ({
           ...product,
-          id: product._id || product.id // Use _id if available, otherwise fallback to id
+          id: product._id || product.id
         }));
         setProducts(formattedData);
       } catch (err: any) {
