@@ -61,12 +61,25 @@ export default function App() {
       tg.ready();
       tg.expand();
       
+      // Set theme for Telegram
+      document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams?.bg_color || '#ffffff');
+      document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams?.text_color || '#000000');
+      
       // Get user data from Telegram
       if (tg.initDataUnsafe?.user) {
         setTelegramUser(tg.initDataUnsafe.user);
       }
+
+      // Configure main button for cart
+      if (cartItems.length > 0) {
+        tg.MainButton.text = `Корзина (${cartItems.length})`;
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => setCurrentScreen("cart"));
+      } else {
+        tg.MainButton.hide();
+      }
     }
-  }, []);
+  }, [cartItems]);
 
   const navigateToScreen = (screen: Screen) => {
     if (screen === "admin") {

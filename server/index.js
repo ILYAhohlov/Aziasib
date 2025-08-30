@@ -1,11 +1,9 @@
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 
 const app = express();
@@ -83,9 +81,12 @@ const Product = mongoose.model('Product', productSchema);
 const Order = mongoose.model('Order', orderSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 
-// Routes
+// Base API route
+app.get('/api', (req, res) => {
+  res.json({ message: 'OptBazar API is running', timestamp: new Date().toISOString() });
+});
 
-// Products
+// Products API Routes
 app.get('/api/products', async (req, res) => {
   try {
     const products = await Product.find();
@@ -176,7 +177,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     const fs = require('fs');
     const file = fs.readFileSync(req.file.path);
     const fileName = `${Date.now()}-${req.file.originalname}`;
-    
+
     const { data, error } = await supabase.storage
       .from('product-images')
       .upload(fileName, file, {
@@ -205,7 +206,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    
+
     // For demo purposes, use simple hardcoded check
     // In production, use bcrypt and proper JWT
     if (username === 'admin' && password === 'admin123') {
@@ -242,7 +243,7 @@ async function initializeSupabaseStorage() {
       fileSizeLimit: 5242880, // 5MB
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
     });
-    
+
     if (error && error.message !== 'Bucket already exists') {
       console.error('Error creating bucket:', error);
     } else {
@@ -302,8 +303,8 @@ async function initializeDatabase() {
   }
 }
 
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  initializeDatabase();
-  initializeSupabaseStorage();
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+  console.log(`API available at http://0.0.0.0:${PORT}/api`);
 });
