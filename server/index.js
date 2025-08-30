@@ -92,7 +92,6 @@ app.get('/api', (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     const products = await Product.find();
-    // Transform _id to id for frontend compatibility
     const transformedProducts = products.map(product => ({
       ...product.toObject(),
       id: product._id.toString()
@@ -197,12 +196,10 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       throw error;
     }
 
-    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('product-images')
       .getPublicUrl(fileName);
 
-    // Clean up temporary file
     fs.unlinkSync(req.file.path);
 
     res.json({ url: publicUrl });
@@ -216,8 +213,6 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // For demo purposes, use simple hardcoded check
-    // In production, use bcrypt and proper JWT
     if (username === 'admin' && password === 'admin123') {
       const token = jwt.sign({ username }, 'secret-key', { expiresIn: '24h' });
       res.json({ token, message: 'Login successful' });
@@ -240,20 +235,10 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: 'Internal server error', details: error.message });
 });
 
-// Handle React Router routes - MUST be last after all API routes
-app.get('*', (req, res) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
+// Simplified catch-all for React routes 
+app.use('*', (req, res) => {
   const indexPath = path.join(__dirname, '../build/index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Build not found. Please run: npm run build');
-    }
-  });
+  res.sendFile(indexPath);
 });
 
 // Initialize Supabase storage
@@ -261,7 +246,7 @@ async function initializeSupabaseStorage() {
   try {
     const { data, error } = await supabase.storage.createBucket('product-images', {
       public: true,
-      fileSizeLimit: 5242880, // 5MB
+      fileSizeLimit: 5242880,
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
     });
 
