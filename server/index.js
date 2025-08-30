@@ -1,4 +1,3 @@
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -261,43 +260,84 @@ async function initializeSupabaseStorage() {
 }
 
 // Initialize database with sample data
-async function initializeDatabase() {
+const initializeDatabase = async () => {
   try {
-    const productCount = await Product.countDocuments();
-    if (productCount === 0) {
+    // Check if products already exist
+    const existingProducts = await Product.find();
+    if (existingProducts.length === 0) {
+      // Add sample products
       const sampleProducts = [
         {
+          id: "1",
           name: "Огурцы свежие",
           category: "овощи",
           price: 50,
           minOrder: 10,
           unit: "кг",
-          description: "Свежие огурцы из Узбекистана",
+          description: "Свежие огурцы прямо с грядки. Идеальны для салатов и консервации.",
           shelfLife: "7 дней",
           allergens: "Нет",
-          image: "https://images.unsplash.com/photo-1560433802-62c9db426a4d"
+          image: "https://images.unsplash.com/photo-1560433802-62c9db426a4d?w=400"
         },
         {
+          id: "2", 
           name: "Яблоки Гала",
-          category: "фрукты", 
+          category: "фрукты",
           price: 120,
           minOrder: 20,
           unit: "кг",
-          description: "Сладкие красные яблоки",
-          shelfLife: "30 дней",
+          description: "Сладкие и сочные яблоки сорта Гала. Отличный источник витаминов.",
+          shelfLife: "14 дней",
           allergens: "Нет",
-          image: "https://images.unsplash.com/photo-1571535911609-4f7afc6af16b"
+          image: "https://images.unsplash.com/photo-1623815242959-fb20354f9b8d?w=400"
         },
         {
+          id: "3",
+          name: "Черный перец горошком",
+          category: "специи", 
+          price: 280,
+          minOrder: 1,
+          unit: "кг",
+          description: "Ароматный черный перец горошком высшего качества.",
+          shelfLife: "24 месяца",
+          allergens: "Нет",
+          image: "https://images.unsplash.com/photo-1649952052743-5e8f37c348c5?w=400"
+        },
+        {
+          id: "4",
+          name: "Помидоры черри",
+          category: "овощи",
+          price: 180,
+          minOrder: 5,
+          unit: "кг", 
+          description: "Маленькие сладкие помидорчики черри. Прекрасны в салатах.",
+          shelfLife: "5 дней",
+          allergens: "Нет",
+          image: "https://images.unsplash.com/photo-1607305387299-a3d9611cd469?w=400"
+        },
+        {
+          id: "5",
           name: "Бананы",
           category: "фрукты",
           price: 90,
-          minOrder: 10,
-          unit: "кг", 
-          description: "Спелые сладкие бананы из Эквадора",
-          shelfLife: "5 дней",
+          minOrder: 15,
+          unit: "кг",
+          description: "Спелые тропические бананы. Богаты калием и витаминами.",
+          shelfLife: "5 дней", 
           allergens: "Нет",
-          image: "https://images.unsplash.com/photo-1603833665858-e61d17a86224"
+          image: "https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400"
+        },
+        {
+          id: "6",
+          name: "Куркума молотая",
+          category: "специи",
+          price: 450,
+          minOrder: 1,
+          unit: "кг",
+          description: "Натуральная куркума высшего качества. Обладает антиоксидантными свойствами.",
+          shelfLife: "18 месяцев",
+          allergens: "Нет",
+          image: "https://images.unsplash.com/photo-1615485925600-97b042c9ca24?w=400"
         }
       ];
 
@@ -314,7 +354,7 @@ async function startServer() {
   try {
     await initializeSupabaseStorage();
     await initializeDatabase();
-    
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);
       console.log(`API available at http://0.0.0.0:${PORT}/api`);
