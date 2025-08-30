@@ -234,21 +234,26 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Handle React Router routes - MUST be last
-app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '../build/index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('App not built. Run: npm run build');
-    }
-  });
-});
-
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.error('Server error:', error);
   res.status(500).json({ error: 'Internal server error', details: error.message });
+});
+
+// Handle React Router routes - MUST be last after all API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  const indexPath = path.join(__dirname, '../build/index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).send('Build not found. Please run: npm run build');
+    }
+  });
 });
 
 // Initialize Supabase storage

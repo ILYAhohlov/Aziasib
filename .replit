@@ -9,7 +9,7 @@ run = ["sh", "-c", "node server/index.js"]
 build = ["sh", "-c", "npm run build"]
 
 [workflows]
-runButton = "Production Server"
+runButton = "Server Only"
 
 [[workflows.workflow]]
 name = "Start Server"
@@ -57,6 +57,15 @@ args = "npm run build && node server/index.js"
 
 [[workflows.workflow]]
 name = "Production Server"
+author = 36330666
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/index.js"
+
+[[workflows.workflow]]
+name = "Server Only"
 author = 36330666
 mode = "sequential"
 
