@@ -93,14 +93,30 @@ export default function App() {
     }
   };
 
-  const handleAdminLogin = (password: string): boolean => {
-    // Простая проверка пароля для демо (в реальном приложении должна быть серверная валидация)
-    if (password === "admin123") {
-      setIsAdminAuthenticated(true);
-      setCurrentScreen("admin");
-      return true;
+  const handleAdminLogin = async (password: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: 'admin',
+          password: password
+        })
+      });
+
+      if (response.ok) {
+        setIsAdminAuthenticated(true);
+        setCurrentScreen("admin");
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const handleAdminLogout = () => {

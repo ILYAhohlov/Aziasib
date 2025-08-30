@@ -17,16 +17,25 @@ app.use(express.json());
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, '../build')));
 
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://optbazar_becomingto:71dccccce5b294406027a42ed3c3020fb3e797e3@dfqdnz.h.filess.io:27018/optbazar_becomingto";
+// MongoDB connection - используем секрет
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error('MONGODB_URI not found in environment variables');
+  process.exit(1);
+}
 
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Supabase configuration
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://pdlhdxjsjmcgojzlwujl.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g';
+// Supabase configuration - используем секреты
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase credentials not found in environment variables');
+  process.exit(1);
+}
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Multer configuration for file uploads
@@ -207,15 +216,19 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
   }
 });
 
-// Admin authentication
+// Admin authentication - используем секреты
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // В продакшене используйте переменные окружения
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-    const JWT_SECRET = process.env.JWT_SECRET || 'secret-key';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const JWT_SECRET = process.env.JWT_SECRET;
+
+    if (!ADMIN_PASSWORD || !JWT_SECRET) {
+      console.error('Admin credentials not found in environment variables');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
 
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
