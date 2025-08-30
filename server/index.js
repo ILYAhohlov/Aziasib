@@ -1,3 +1,4 @@
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -85,12 +86,6 @@ const Admin = mongoose.model('Admin', adminSchema);
 // Base API route
 app.get('/api', (req, res) => {
   res.json({ message: 'OptBazar API is running', timestamp: new Date().toISOString() });
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('Server error:', error);
-  res.status(500).json({ error: 'Internal server error', details: error.message });
 });
 
 // Products API Routes
@@ -239,33 +234,26 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// The "catchall" handler: send back React's index.html file for non-API routes
+// Handle React Router routes - MUST be last
 app.get('*', (req, res) => {
-  // Don't serve index.html for API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
-  // Check if file exists before serving
   const indexPath = path.join(__dirname, '../build/index.html');
-  const fs = require('fs');
-  
-  try {
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send('App not built yet. Please build first.');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).send('App not built. Run: npm run build');
     }
-  } catch (error) {
-    console.error('Error serving index.html:', error);
-    res.status(500).send('Server error');
-  }
+  });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Server error:', error);
+  res.status(500).json({ error: 'Internal server error', details: error.message });
 });
 
 // Initialize Supabase storage
 async function initializeSupabaseStorage() {
   try {
-    // Create bucket for product images if it doesn't exist
     const { data, error } = await supabase.storage.createBucket('product-images', {
       public: true,
       fileSizeLimit: 5242880, // 5MB
