@@ -87,12 +87,24 @@ app.get('/api', (req, res) => {
   res.json({ message: 'OptBazar API is running', timestamp: new Date().toISOString() });
 });
 
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Server error:', error);
+  res.status(500).json({ error: 'Internal server error', details: error.message });
+});
+
 // Products API Routes
 app.get('/api/products', async (req, res) => {
   try {
     const products = await Product.find();
-    res.json(products);
+    // Transform _id to id for frontend compatibility
+    const transformedProducts = products.map(product => ({
+      ...product.toObject(),
+      id: product._id.toString()
+    }));
+    res.json(transformedProducts);
   } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -144,9 +156,10 @@ app.post('/api/orders', async (req, res) => {
 
 app.get('/api/orders', async (req, res) => {
   try {
-    const orders = await Order.find().populate('items.productId');
+    const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
+    console.error('Error fetching orders:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -232,7 +245,16 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  
+  // Check if file exists before serving
+  const indexPath = path.join(__dirname, '../dist/index.html');
+  const fs = require('fs');
+  
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('App not built yet. Run: npm run build');
+  }
 });
 
 // Initialize Supabase storage
