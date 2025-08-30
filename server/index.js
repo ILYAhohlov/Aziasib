@@ -235,8 +235,8 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: 'Internal server error', details: error.message });
 });
 
-// Simplified catch-all for React routes 
-app.use('*', (req, res) => {
+// Serve React app for all non-API routes
+app.get('/', (req, res) => {
   const indexPath = path.join(__dirname, '../build/index.html');
   res.sendFile(indexPath);
 });
