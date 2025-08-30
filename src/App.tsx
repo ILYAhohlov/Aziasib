@@ -1,9 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CatalogScreen } from "./components/CatalogScreen";
 import { CartScreen } from "./components/CartScreen";
 import { AdminScreen } from "./components/AdminScreen";
 import { AdminLoginScreen } from "./components/AdminLoginScreen";
 import { AboutScreen } from "./components/AboutScreen";
+
+// Telegram WebApp types
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp?: {
+        ready: () => void;
+        expand: () => void;
+        close: () => void;
+        MainButton: {
+          text: string;
+          show: () => void;
+          hide: () => void;
+          onClick: (callback: () => void) => void;
+        };
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            first_name: string;
+            username?: string;
+          };
+        };
+        sendData: (data: string) => void;
+      };
+    };
+  }
+}
 
 export type Screen = "catalog" | "cart" | "admin" | "admin-login" | "about";
 
@@ -22,6 +49,24 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("catalog");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
+  const [telegramUser, setTelegramUser] = useState<any>(null);
+
+  // Telegram WebApp initialization
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      setIsTelegramWebApp(true);
+      const tg = window.Telegram.WebApp;
+      
+      tg.ready();
+      tg.expand();
+      
+      // Get user data from Telegram
+      if (tg.initDataUnsafe?.user) {
+        setTelegramUser(tg.initDataUnsafe.user);
+      }
+    }
+  }, []);
 
   const navigateToScreen = (screen: Screen) => {
     if (screen === "admin") {
