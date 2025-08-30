@@ -250,10 +250,15 @@ app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, '../build/index.html');
   const fs = require('fs');
   
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('App not built yet. Run: npm run build');
+  try {
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('App not built yet. Please build first.');
+    }
+  } catch (error) {
+    console.error('Error serving index.html:', error);
+    res.status(500).send('Server error');
   }
 });
 

@@ -9,7 +9,7 @@ run = ["sh", "-c", "node server/index.js"]
 build = ["sh", "-c", "npm run build"]
 
 [workflows]
-runButton = "Full App"
+runButton = "Production Server"
 
 [[workflows.workflow]]
 name = "Start Server"
@@ -54,6 +54,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run build && node server/index.js"
+
+[[workflows.workflow]]
+name = "Production Server"
+author = 36330666
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/index.js"
 
 [[ports]]
 localPort = 3000
