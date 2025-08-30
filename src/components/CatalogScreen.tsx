@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Minus, Plus } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { StickyFooter } from "./StickyFooter";
@@ -6,8 +6,10 @@ import { ProductModal } from "./ProductModal";
 import { Button } from "./ui/button";
 import { Screen } from "../App";
 
+// Define a type for the product that includes the _id from the API
 interface Product {
   id: string;
+  _id?: string; // Supabase might return _id instead of id
   name: string;
   image: string;
   images?: string[];
@@ -20,82 +22,14 @@ interface Product {
   allergens?: string;
 }
 
-interface CatalogScreenProps {
-  navigateToScreen: (screen: Screen) => void;
-  cartItemsCount: number;
-  addToCart: (product: Product, quantity: number) => void;
-}
-
-// Мокированные данные товаров
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    name: "Огурцы свежие",
-    image: "https://images.unsplash.com/photo-1560433802-62c9db426a4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMHZlZ2V0YWJsZXMlMjBjdWN1bWJlcnxlbnwxfHx8fDE3NTY1MzY2NTd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: 50,
-    category: "овощи",
-    minOrder: 10,
-    unit: "кг",
-    description: "Свежие огурцы из Узбекистана. Хрустящие и сочные.",
-    shelfLife: "7 дней",
-    allergens: "Нет"
-  },
-  {
-    id: "2",
-    name: "Яблоки Гала",
-    image: "https://images.unsplash.com/photo-1571535911609-4f7afc6af16b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGFwcGxlcyUyMGdhbGElMjByZWR8ZW58MXx8fHwxNzU2NTM2NjY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: 120,
-    category: "фрукты",
-    minOrder: 20,
-    unit: "кг",
-    description: "Сладкие красные яблоки сорта Гала. Отличное качество.",
-    shelfLife: "30 дней",
-    allergens: "Нет"
-  },
-  {
-    id: "3",
-    name: "Черный перец горошком",
-    image: "https://images.unsplash.com/photo-1649952052743-5e8f37c348c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMHBlcHBlciUyMHNwaWNlfGVufDF8fHx8MTc1NjUzNjY2OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: 280,
-    category: "специи",
-    minOrder: 1,
-    unit: "кг",
-    description: "Ароматный черный перец горошком высшего сорта.",
-    shelfLife: "2 года",
-    allergens: "Нет"
-  },
-  {
-    id: "4",
-    name: "Помидоры розовые",
-    image: "https://images.unsplash.com/photo-1683008952375-410ae668e6b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMHRvbWF0b2VzfGVufDF8fHx8MTc1NjQyNzE5OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: 80,
-    category: "овощи",
-    minOrder: 15,
-    unit: "кг",
-    description: "Сочные розовые помидоры. Идеальны для салатов.",
-    shelfLife: "7 дней",
-    allergens: "Нет"
-  },
-  {
-    id: "5",
-    name: "Бананы эквадорские",
-    image: "https://images.unsplash.com/photo-1745488791982-92e422ca5290?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJhbmFuYXN8ZW58MXx8fHwxNzU2NTM2Njc0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: 90,
-    category: "фрукты",
-    minOrder: 10,
-    unit: "кг",
-    description: "Спелые сладкие бананы из Эквадора.",
-    shelfLife: "5 дней",
-    allergens: "Нет"
-  }
-];
-
+// Define a type for the product card props
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, quantity: number) => void;
   onCardClick: (product: Product) => void;
 }
 
+// ProductCard component (unchanged logic, but uses Product type)
 function ProductCard({ product, onAddToCart, onCardClick }: ProductCardProps) {
   const [quantity, setQuantity] = useState(product.minOrder);
   const isQuantityValid = quantity >= product.minOrder;
@@ -161,7 +95,7 @@ function ProductCard({ product, onAddToCart, onCardClick }: ProductCardProps) {
             >
               <Minus className="w-3 h-3" />
             </Button>
-            
+
             <input
               type="number"
               value={quantity}
@@ -171,7 +105,7 @@ function ProductCard({ product, onAddToCart, onCardClick }: ProductCardProps) {
               className="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm"
               onClick={(e) => e.stopPropagation()}
             />
-            
+
             <Button
               onClick={increaseQuantity}
               variant="outline"
@@ -180,10 +114,10 @@ function ProductCard({ product, onAddToCart, onCardClick }: ProductCardProps) {
             >
               <Plus className="w-3 h-3" />
             </Button>
-            
+
             <span className="text-sm text-gray-600">{product.unit}</span>
           </div>
-          
+
           {!isQuantityValid && (
             <p className="text-red-500 text-xs">
               Минимум {product.minOrder} {product.unit}
@@ -204,13 +138,67 @@ function ProductCard({ product, onAddToCart, onCardClick }: ProductCardProps) {
   );
 }
 
+// Mock categories for the filter
+const categories = ["все", "овощи", "фрукты", "специи"];
+
+// Define Props for CatalogScreen
+interface CatalogScreenProps {
+  navigateToScreen: (screen: Screen) => void;
+  cartItemsCount: number;
+  addToCart: (product: Product, quantity: number) => void;
+}
+
 export function CatalogScreen({ navigateToScreen, cartItemsCount, addToCart }: CatalogScreenProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("все");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  // Загрузка товаров с сервера
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Replace with your Supabase project URL and API key
+        // For a production app, you'd typically use environment variables
+        const SUPABASE_URL = "https://pdlhdxjsjmcgojzlwujl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g";
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        // Supabase typically returns _id, map it to id for consistency
+        const formattedData = data.map((product: any) => ({
+          ...product,
+          id: product._id || product.id // Use _id if available, otherwise fallback to id
+        }));
+        setProducts(formattedData);
+      } catch (err: any) {
+        console.error('Error fetching products:', err);
+        setError(`Ошибка загрузки товаров: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategory === "все" || product.category.toLowerCase() === selectedCategory.toLowerCase())
   );
 
   const handleProductClick = (product: Product) => {
@@ -221,6 +209,31 @@ export function CatalogScreen({ navigateToScreen, cartItemsCount, addToCart }: C
     setSelectedProduct(null);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка товаров...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <p className="text-red-500 text-lg mb-4">Ошибка</p>
+          <p className="text-gray-600">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white">
+            Повторить попытку
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Хедер */}
@@ -229,15 +242,15 @@ export function CatalogScreen({ navigateToScreen, cartItemsCount, addToCart }: C
           <h1 className="text-2xl font-semibold text-center text-gray-900 mb-4">
             Азия-Сибирь - оптовый рынок онлайн
           </h1>
-          
+
           {/* Поисковая строка */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Поиск товаров"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -245,21 +258,41 @@ export function CatalogScreen({ navigateToScreen, cartItemsCount, addToCart }: C
       </header>
 
       {/* Сетка товаров */}
-      <main className="px-4 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredProducts.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={addToCart}
-              onCardClick={handleProductClick}
-            />
-          ))}
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        <div className="flex justify-center">
+          <div className="w-full max-w-md">
+            <div className="flex overflow-x-auto space-x-4 pb-2 no-scrollbar">
+              {categories.map(category => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
+                    ${selectedCategory === category
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                >
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">Товары не найдены</p>
+            <p className="text-gray-500 text-lg">Товары не найдены</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map(product => (
+              <ProductCard 
+                key={product.id} // Use product.id which is mapped from Supabase's _id
+                product={product}
+                onAddToCart={addToCart}
+                onCardClick={handleProductClick}
+              />
+            ))}
           </div>
         )}
       </main>

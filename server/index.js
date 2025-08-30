@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
+const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -21,12 +21,10 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Cloudinary configuration
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
-  api_key: process.env.CLOUDINARY_API_KEY || 'your-api-key', 
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'your-api-secret'
-});
+// Supabase configuration
+const supabaseUrl = 'https://pdlhdxjsjmcgojzlwujl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Multer configuration for file uploads
 const upload = multer({ dest: 'uploads/' });
@@ -171,8 +169,29 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path);
-    res.json({ url: result.secure_url });
+    const fs = require('fs');
+    const file = fs.readFileSync(req.file.path);
+    const fileName = `${Date.now()}-${req.file.originalname}`;
+    
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, file, {
+        contentType: req.file.mimetype
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(fileName);
+
+    // Clean up temporary file
+    fs.unlinkSync(req.file.path);
+
+    res.json({ url: publicUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -200,6 +219,26 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// Initialize Supabase storage
+async function initializeSupabaseStorage() {
+  try {
+    // Create bucket for product images if it doesn't exist
+    const { data, error } = await supabase.storage.createBucket('product-images', {
+      public: true,
+      fileSizeLimit: 5242880, // 5MB
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
+    });
+    
+    if (error && error.message !== 'Bucket already exists') {
+      console.error('Error creating bucket:', error);
+    } else {
+      console.log('Supabase storage bucket ready');
+    }
+  } catch (error) {
+    console.log('Supabase storage initialization:', error.message);
+  }
+}
 
 // Initialize database with sample data
 async function initializeDatabase() {
@@ -253,4 +292,5 @@ async function initializeDatabase() {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   initializeDatabase();
+  initializeSupabaseStorage();
 });

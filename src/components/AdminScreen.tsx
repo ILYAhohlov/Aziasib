@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Upload, Edit, Trash2, Plus, LogOut } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { StickyFooter } from "./StickyFooter";
@@ -33,53 +33,6 @@ interface Order {
   amount: number;
 }
 
-// Мокированные данные
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    name: "Огурцы свежие",
-    category: "овощи",
-    price: 50,
-    minOrder: 10,
-    description: "Свежие огурцы из Узбекистана",
-    shelfLife: "7 дней",
-    allergens: "Нет",
-    image: "https://images.unsplash.com/photo-1560433802-62c9db426a4d"
-  },
-  {
-    id: "2",
-    name: "Яблоки Гала",
-    category: "фрукты",
-    price: 120,
-    minOrder: 20,
-    description: "Сладкие красные яблоки",
-    shelfLife: "30 дней",
-    allergens: "Нет",
-    image: "https://images.unsplash.com/photo-1571535911609-4f7afc6af16b"
-  }
-];
-
-const mockOrders: Order[] = [
-  {
-    id: "1001",
-    items: "Огурцы 10кг, Яблоки 20кг",
-    phone: "+7 (999) 123-45-67",
-    address: "г. Новосибирск, ул. Ленина, 1",
-    comments: "Доставить утром",
-    status: "Принят",
-    amount: 2900
-  },
-  {
-    id: "1002",
-    items: "Помидоры 15кг",
-    phone: "+7 (999) 987-65-43",
-    address: "г. Новосибирск, пр. Маркса, 10",
-    comments: "",
-    status: "В доставке",
-    amount: 1200
-  }
-];
-
 interface ProductFormData {
   name: string;
   category: string;
@@ -93,12 +46,12 @@ interface ProductFormData {
 
 export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: AdminScreenProps) {
   const [activeTab, setActiveTab] = useState<"products" | "orders">("products");
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
+
   const [productForm, setProductForm] = useState<ProductFormData>({
     name: "",
     category: "овощи",
@@ -109,6 +62,42 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
     allergens: "",
     images: []
   });
+
+  // Загрузка данных с сервера
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Загружаем товары
+        const productsResponse = await fetch('https://pdlhdxjsjmcgojzlwujl.supabase.co/rest/v1/products?select=*', {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          },
+        });
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          setProducts(productsData);
+        }
+
+        // Загружаем заказы
+        const ordersResponse = await fetch('https://pdlhdxjsjmcgojzlwujl.supabase.co/rest/v1/orders?select=*', {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          },
+        });
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          setOrders(ordersData);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -121,44 +110,103 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
     setProductForm(prev => ({ ...prev, images: files }));
   };
 
-  const handleProductSubmit = () => {
+  const handleProductSubmit = async () => {
     if (!productForm.name || !productForm.price || !productForm.minOrder) {
       alert("Заполните обязательные поля");
       return;
     }
 
-    const productData = {
-      id: editingProduct?.id || Date.now().toString(),
-      name: productForm.name,
-      category: productForm.category,
-      price: parseInt(productForm.price),
-      minOrder: parseInt(productForm.minOrder),
-      description: productForm.description,
-      shelfLife: productForm.shelfLife,
-      allergens: productForm.allergens,
-      image: "https://images.unsplash.com/photo-1560433802-62c9db426a4d" // Мокированное изображение
-    };
+    const formData = new FormData();
+    formData.append("name", productForm.name);
+    formData.append("category", productForm.category);
+    formData.append("price", productForm.price);
+    formData.append("minOrder", productForm.minOrder);
+    formData.append("description", productForm.description);
+    formData.append("shelfLife", productForm.shelfLife);
+    formData.append("allergens", productForm.allergens);
 
-    if (editingProduct) {
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? productData : p));
-      setEditingProduct(null);
-    } else {
-      setProducts(prev => [...prev, productData]);
+    // Обработка загрузки изображений
+    if (productForm.images.length > 0) {
+      // Предполагаем, что у вас есть эндпоинт для загрузки изображений, который возвращает URL
+      // Здесь используется заглушка, замените на реальную логику загрузки
+      const uploadedImageUrls = await Promise.all(
+        productForm.images.map(async (image) => {
+          // Замените эту часть на реальную загрузку файла на Supabase Storage
+          // и получение URL
+          console.log(`Uploading image: ${image.name}`);
+          // Пример: return await uploadToSupabaseStorage(image);
+          return "https://via.placeholder.com/150"; // Заглушка URL
+        })
+      );
+      // В зависимости от структуры вашей таблицы, вы можете сохранить URL как строку
+      // или как массив строк. Здесь предполагается, что поле 'image' может хранить один URL.
+      // Если нужно хранить несколько, измените тип и логику.
+      formData.append("image", uploadedImageUrls[0]); // Используем первое изображение как основное
+    } else if (editingProduct) {
+      // Если редактируем товар и новые изображения не выбраны, сохраняем старое
+      formData.append("image", editingProduct.image);
     }
 
-    // Сброс формы
-    setProductForm({
-      name: "",
-      category: "овощи",
-      price: "",
-      minOrder: "",
-      description: "",
-      shelfLife: "",
-      allergens: "",
-      images: []
-    });
+    try {
+      let url = 'https://pdlhdxjsjmcgojzlwujl.supabase.co/rest/v1/products';
+      let method = 'POST';
 
-    alert("Товар успешно сохранен!");
+      if (editingProduct) {
+        url += `?id=eq.${editingProduct.id}`;
+        method = 'PUT';
+      }
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          'Content-Type': 'application/json', // Supabase обычно ожидает JSON
+          'Prefer': editingProduct ? 'return=representation' : 'return=minimal',
+        },
+        body: JSON.stringify({ // Отправляем как JSON, так как Supabase API обычно работает с JSON
+          id: editingProduct?.id || Date.now().toString(),
+          name: productForm.name,
+          category: productForm.category,
+          price: parseInt(productForm.price),
+          minOrder: parseInt(productForm.minOrder),
+          description: productForm.description,
+          shelfLife: productForm.shelfLife,
+          allergens: productForm.allergens,
+          image: formData.get("image") ? formData.get("image")!.toString() : (editingProduct ? editingProduct.image : "https://via.placeholder.com/150"),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (editingProduct) {
+        setProducts(prev => prev.map(p => p.id === editingProduct.id ? result[0] : p));
+        setEditingProduct(null);
+      } else {
+        setProducts(prev => [...prev, result[0]]);
+      }
+
+      // Сброс формы
+      setProductForm({
+        name: "",
+        category: "овощи",
+        price: "",
+        minOrder: "",
+        description: "",
+        shelfLife: "",
+        allergens: "",
+        images: []
+      });
+
+      alert("Товар успешно сохранен!");
+    } catch (error) {
+      console.error("Error submitting product:", error);
+      alert("Ошибка при сохранении товара.");
+    }
   };
 
   const handleEditProduct = (product: Product) => {
@@ -175,16 +223,54 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
     });
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("Удалить товар?")) {
-      setProducts(prev => prev.filter(p => p.id !== id));
+      try {
+        const response = await fetch(`https://pdlhdxjsjmcgojzlwujl.supabase.co/rest/v1/products?id=eq.${id}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        setProducts(prev => prev.filter(p => p.id !== id));
+        alert("Товар успешно удален!");
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Ошибка при удалении товара.");
+      }
     }
   };
 
-  const handleStatusChange = (orderId: string, newStatus: Order["status"]) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+  const handleStatusChange = async (orderId: string, newStatus: Order["status"]) => {
+    try {
+      const response = await fetch(`https://pdlhdxjsjmcgojzlwujl.supabase.co/rest/v1/orders?id=eq.${orderId}`, {
+        method: 'PATCH', // Используем PATCH для частичного обновления
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbGhkeGpzam1jZ29qemx3dWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTc3NjYsImV4cCI6MjA3MjEzMzc2Nn0.Pfq4iclPhBr7knCVhSX5zRvzTZqjMEgXIRdhP4nLQ0g',
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedOrder = await response.json();
+      setOrders(prev => prev.map(order => order.id === orderId ? updatedOrder[0] : order));
+      alert("Статус заказа обновлен!");
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      alert("Ошибка при обновлении статуса заказа.");
+    }
   };
 
   return (
@@ -196,7 +282,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
             <h1 className="text-2xl font-semibold text-gray-900">
               Админ дашборд
             </h1>
-            
+
             <Button
               onClick={onLogout}
               variant="outline"
@@ -207,7 +293,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
               <span>Выйти</span>
             </Button>
           </div>
-          
+
           {/* Вкладки */}
           <div className="flex space-x-2">
             <Button
@@ -240,7 +326,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
               <h3 className="font-semibold text-gray-900 mb-4">
                 {editingProduct ? "Редактировать товар" : "Добавить товар"}
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -253,7 +339,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Категория *
@@ -268,7 +354,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     <option value="специи">Специи</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Цена (руб/кг) *
@@ -280,7 +366,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Мин. объем (кг) *
@@ -292,7 +378,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Описание
@@ -303,7 +389,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     className="w-full h-20 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Срок хранения
@@ -316,7 +402,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Аллергены
@@ -329,7 +415,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Фото (до 3 штук)
@@ -358,7 +444,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex space-x-2 mt-4">
                 <Button
                   onClick={handleProductSubmit}
@@ -367,7 +453,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                   <Plus className="w-4 h-4 mr-2" />
                   {editingProduct ? "Сохранить" : "Добавить"}
                 </Button>
-                
+
                 {editingProduct && (
                   <Button
                     onClick={() => {
@@ -395,7 +481,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
                 <h3 className="font-semibold text-gray-900">Товары</h3>
-                
+
                 <div className="flex space-x-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -407,7 +493,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                       className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  
+
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
@@ -420,7 +506,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
                   </select>
                 </div>
               </div>
-              
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="border-b border-gray-200">
@@ -481,7 +567,7 @@ export function AdminScreen({ navigateToScreen, cartItemsCount, onLogout }: Admi
         {activeTab === "orders" && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h3 className="font-semibold text-gray-900 mb-4">Заказы</h3>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="border-b border-gray-200">
