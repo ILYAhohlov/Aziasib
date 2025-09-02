@@ -7,7 +7,7 @@ import { Screen } from "../App";
 interface AdminLoginScreenProps {
   navigateToScreen: (screen: Screen) => void;
   cartItemsCount: number;
-  onLogin: (password: string) => boolean;
+  onLogin: (password: string) => Promise<boolean>;
 }
 
 export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: AdminLoginScreenProps) {
@@ -27,9 +27,9 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
     setIsLoading(true);
     setError("");
 
-    // Имитация проверки пароля
-    setTimeout(() => {
-      const isAuthenticated = onLogin(password);
+    // Проверка пароля через API
+    try {
+      const isAuthenticated = await onLogin(password);
 
       if (isAuthenticated) {
         // Успешный вход - переключение произойдет в родительском компоненте
@@ -37,9 +37,12 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
         setError("Неверный пароль");
         setPassword("");
       }
+    } catch (error) {
+      setError("Ошибка подключения к серверу");
+      setPassword("");
+    }
 
-      setIsLoading(false);
-    }, 1000);
+    setIsLoading(false);
   };
 
   const togglePasswordVisibility = () => {
@@ -140,7 +143,7 @@ export function AdminLoginScreen({ navigateToScreen, cartItemsCount, onLogin }: 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-medium text-blue-900 mb-2">Демо-доступ:</h3>
             <p className="text-blue-800 text-sm mb-2">
-              Для демонстрации используйте пароль: <code className="bg-blue-100 px-2 py-1 rounded text-xs font-mono">admin123</code>
+              Для демонстрации используйте пароль: <code className="bg-blue-100 px-2 py-1 rounded text-xs font-mono">633100admin</code>
             </p>
             <p className="text-blue-700 text-xs">
               В реальном приложении пароль должен быть надежно зашифрован и храниться в безопасном месте.

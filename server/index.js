@@ -11,7 +11,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://asiasib.vercel.app', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Serve static files from the React app build directory
@@ -220,10 +223,18 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+    
+    console.log('Login attempt:', { username, passwordLength: password?.length });
 
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
     const JWT_SECRET = process.env.JWT_SECRET;
+    
+    console.log('Environment check:', { 
+      hasAdminPassword: !!ADMIN_PASSWORD, 
+      hasJwtSecret: !!JWT_SECRET,
+      adminUsername: ADMIN_USERNAME
+    });
 
     if (!ADMIN_PASSWORD || !JWT_SECRET) {
       console.error('Admin credentials not found in environment variables');
@@ -231,12 +242,15 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      console.log('Login successful');
       const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
       res.json({ token, message: 'Login successful' });
     } else {
+      console.log('Login failed - invalid credentials');
       res.status(401).json({ error: 'Invalid credentials' });
     }
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: error.message });
   }
 });
